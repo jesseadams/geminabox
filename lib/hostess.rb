@@ -2,6 +2,19 @@ require 'sinatra/base'
 
 class Hostess < Sinatra::Base
   def serve
+    file = File.expand_path(File.join(Geminabox.data, *request.path_info))
+
+    unless File.exists?(file)
+      Net::HTTP.start("production.cf.rubygems.org") do |http|
+        path = File.join(*request.path_info)
+        puts path
+        response = http.get(path)
+        open(file, "wb") do |file|
+          file.write(response.body)
+        end
+      end
+    end
+
     send_file(File.expand_path(File.join(Geminabox.data, *request.path_info)), :type => response['Content-Type'])
   end
 
